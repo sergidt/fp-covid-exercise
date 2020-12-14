@@ -8,24 +8,15 @@ export interface CovidDataEntry {
     cumulativeCasesPer100KLast14Days: string;
 }
 
-interface Mapper<T> {
-    [key: string]: keyof T;
+
+
+// utils
+
+export function log(message: string, params: any) {
+    console.log(`%c${ message }`, 'padding: 10px; background-color: black; color: white; font-size: 14px', params);
 }
 
-export const mapper: Mapper<CovidDataEntry> = {
-    'dateRep': 'date',
-    'cases': 'cases',
-    'deaths': 'deaths',
-    'continentExp': 'continent',
-    'countriesAndTerritories': 'country',
-    'popData2019': 'population',
-    'Cumulative_number_for_14_days_of_COVID-19_cases_per_100000': 'cumulativeCasesPer100KLast14Days'
-};
-
-/// UTILS
-
-export const parseCovidData = (mapper: Mapper<CovidDataEntry>) => (item: any) =>
-    Object.entries(item)
-          .reduce((acc, [key, value]: [string, any]) => key in mapper ? { ...acc, [mapper[key]]: value } : acc, {});
-
-const intFrom = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1) + min);
+const pick = <T>(properties: Array<keyof T>) => (item: T) => properties.reduce((acc, cur) => ({
+    ...acc,
+    [cur]: item[cur]
+}), {});
