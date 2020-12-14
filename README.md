@@ -1,4 +1,4 @@
-# Book store
+# Covid fp execises
 
 Ejercicios de Programación funcional
 
