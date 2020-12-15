@@ -105,65 +105,46 @@ console.log(
         .map(({ country }) => country)
 );
 */
-//
 
-/**
- export interface CovidDataEntry {
-    date: string;
-    cases: number;
-    deaths: number;
-    continent: string;
-    country: string;
-    population: number;
-    cumulativeCasesPer100KLast14Days: string;
-}
+//// Ejercicio 5
 
- [
- ["Asia": [[japan, []], []],
- "Europe": []
- ]
+const incidenceOver300 = (data: CovidDataEntry) => +select('cumulativeCasesPer100KLast14Days')(data) > 300;
 
- }
-
-
- */
-
-const groupByContinent = groupByProperty('continent')
-(dataset);
-console.log(
-    Object.entries(groupByContinent)
-);
+const groupByContinentIncidenceOver300 = groupByProperty('continent')(dataset.filter(incidenceOver300));
 
 type Continent = string;
 type CountryName = string;
 
+type SummaryPerCountry = {
+    [key in CountryName]?: Array<Partial<CovidDataEntry>>
+};
+
 type SummaryPerContinent = {
-    [key in Continent]?: Array<[CountryName, Array<CovidDataEntry>]>;
-}
+    continent?: Continent,
+    countries: SummaryPerCountry
+};
 
-Object.entries(groupByCountry2)
-      .map(([country, covidData]: [string, Array<CovidDataEntry>]) => ({
-          country,
-          length: covidData.length,
-          population: covidData[0].population,
-          cases: covidData.reduce((acc, cur) => acc + cur.cases, 0),
-          deaths: covidData.reduce((acc, cur) => acc + cur.deaths, 0),
-      }));
+type KeyAndEntries = [Continent | CountryName, Array<CovidDataEntry>];
 
-const countriesByContinent = Object.entries(groupByContinent)
+const appendSummaryPerCountry = (acc: SummaryPerCountry,
+    [countryName, countryEntries]: KeyAndEntries): SummaryPerCountry => ({
+    ...acc,
+    [countryName]: countryEntries.map(pick<CovidDataEntry>(['date',
+                                                            'cumulativeCasesPer100KLast14Days']))
+});
+
+const countriesByContinent = Object.entries(groupByContinentIncidenceOver300)
                                    .reduce((
-                                       acc: any,
-                                       [continent, entries]: [Continent, Array<CovidDataEntry>]) => {
+                                       acc: Array<SummaryPerContinent>,
+                                       [continent, entries]: KeyAndEntries) => {
                                        const entriesByCountry = groupByProperty('country')(entries);
-                                       return [...acc, [continent, entriesByCountry]];
+                                       return [...acc, {
+                                           continent, countries: Object.entries(entriesByCountry)
+                                                                       .reduce(appendSummaryPerCountry, {})
+                                       }];
                                    }, []);
 
 console.log(
     countriesByContinent
 //        .map(([continent, countries]) =>[continent, Object.entries(countries).map(([country, entries]) => )])
 );
-
-function transform(object, cb) {
-    return Object.entries(object)
-                 .map(([key, data]) => cb(data));
-}
