@@ -108,24 +108,63 @@ console.log(
 
 //// Ejercicio 5
 
+/*
+            Debemos centrarnos en coger las entradas con una incidencia superior a 300.
+            Para ello debemos crear el siguiente predicado que, a partir de la selección adecuada,
+            filtrará los que tienen esa condición
+ */
+
 const incidenceOver300 = (data: CovidDataEntry) => +select('cumulativeCasesPer100KLast14Days')(data) > 300;
 
+/*
+            Agrupamos por continente todas las entradas.
+            Tendrán la siguiente forma:
+            {
+                "America": [],
+                "Europe": [],
+                "Asia": []
+            }
+ */
 const groupByContinentIncidenceOver300 = groupByProperty('continent')(dataset.filter(incidenceOver300));
 
+/*
+    Creamos dos alias hacia el type string
+ */
 type Continent = string;
 type CountryName = string;
 
+/*
+    Tipo SummaryPerCountry, será una agrupación parecida a la anterior con los continentes
+ */
 type SummaryPerCountry = {
     [key in CountryName]?: Array<Partial<CovidDataEntry>>
 };
 
+/*
+    Creamos el tipo final, SummaryPerContinent, que será un objeto con la siguiente forma (para ser más comprensible)
+    {
+        continent: "Asia",
+        countries: {
+            "Japan": [],
+            "India": [],
+            ...
+        }
+     }
+ */
 type SummaryPerContinent = {
     continent?: Continent,
     countries: SummaryPerCountry
 };
 
+/*
+    El siguiente tipo nos ayuda a aplanar (simplificar) los typings
+ */
 type KeyAndEntries = [Continent | CountryName, Array<CovidDataEntry>];
 
+/*
+ * A partir de un par [CountryName, Array<CovidDataEntry>] devolverá un SummaryPerCountry, aprovechando la función pick,
+ * que coge las props que queramos
+ */
 const appendSummaryPerCountry = (acc: SummaryPerCountry,
     [countryName, countryEntries]: KeyAndEntries): SummaryPerCountry => ({
     ...acc,
@@ -133,6 +172,12 @@ const appendSummaryPerCountry = (acc: SummaryPerCountry,
                                                             'cumulativeCasesPer100KLast14Days']))
 });
 
+/*
+    Finalmente componemos el flujo final, que no es nada más que una agrupación de una agrupación, por eso parece tan complejo:
+    De los que hemos filtrado anteriormente, reducimos:
+        - Queremos la forma final de Array de SummaryPerContinent
+        - ponemos el continent y como countries reducimos las entradas que recibimos mediante la función anterior
+ */
 const countriesByContinent = Object.entries(groupByContinentIncidenceOver300)
                                    .reduce((
                                        acc: Array<SummaryPerContinent>,
@@ -146,5 +191,4 @@ const countriesByContinent = Object.entries(groupByContinentIncidenceOver300)
 
 console.log(
     countriesByContinent
-//        .map(([continent, countries]) =>[continent, Object.entries(countries).map(([country, entries]) => )])
 );
